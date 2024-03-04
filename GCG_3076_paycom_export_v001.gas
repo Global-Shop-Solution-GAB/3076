@@ -1,0 +1,160 @@
+Program.Sub.ScreenSU.Start
+gui.Form1..create
+gui.Form1..caption("Paycom Export")
+gui.Form1..size(2550,1095)
+gui.Form1..position(0,0)
+gui.Form1..alwaysontop(False)
+gui.Form1..fontname("Arial")
+gui.Form1..fontsize(8)
+gui.Form1..forecolor(0)
+gui.Form1..fontstyle(,,,,)
+gui.Form1..BackColor(-2147483633)
+gui.Form1..controlbox(True)
+gui.Form1..maxbutton(True)
+gui.Form1..minbutton(True)
+gui.Form1..mousepointer(0)
+gui.Form1..moveable(True)
+gui.Form1..sizeable(True)
+gui.Form1..ShowInTaskBar(True)
+gui.Form1..titlebar(True)
+gui.Form1.lbl1.create(label,"Creating Export File",True,1935,255,1,200,200,True,2,Arial,10,-2147483633,0)
+gui.Form1.lbl1.fontstyle(True,False,False,False)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.UDT.Pyrl.Define("Employee",String,"Employee")
+Variable.UDT.Pyrl.Define("Type",String,"Type")
+Variable.UDT.Pyrl.Define("EC",String,"EC")
+Variable.UDT.Pyrl.Define("Dept",String,"Dept")
+Variable.UDT.Pyrl.Define("Rate",Float)
+Variable.UDT.Pyrl.Define("Tax",String)
+Variable.UDT.Pyrl.Define("Hours",Float,"Hours")
+Variable.uGlobal.uPyrl.Declare("Pyrl")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+F.ODBC.Connection!Con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+Gui.Form1..Show
+F.Intrinsic.Control.CallSub(Buildfile)
+F.Intrinsic.Control.CallSub(Unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3076_paycom_export_v001.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!Con.Close
+F.Intrinsic.Control.End
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3076_paycom_export_v001.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.end
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Unload.End
+
+Program.Sub.BuildFile.Start
+F.Intrinsic.Control.SetErrorHandler("BuildFile_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+V.Local.Date.Declare(String)
+V.Local.Time.Declare(String)
+V.Local.Id.Declare(String)
+V.Local.sFile.Declare(String)
+V.Local.FileName.Declare(String)
+V.Local.query.Declare(String)
+V.Local.iFor.Declare(Long)
+
+Function.Intrinsic.String.Left(Variable.Passed.888888,8,Variable.Local.date)
+Function.Intrinsic.String.Mid(Variable.Passed.888888,9,6,Variable.Local.time)
+Function.Intrinsic.String.Mid(Variable.Passed.888888,15,2,Variable.Local.id)
+
+Function.Intrinsic.String.Concat(Variable.Caller.FilesDir,"\Paycom",V.Local.Date,V.Local.Time,".csv",Variable.Local.Filename)
+
+V.uGlobal.uPyrl.Redim(-1,-1)
+Function.intrinsic.string.concat("select Employee, Type, EC, Dept, Hours from PYRL_LABOR_XFER where RUN_CYMD = '",Variable.Local.date,"' and RUN_TIME = '",Variable.Local.time,"'",Variable.Local.query)
+Function.Odbc.Connection!Con.Openrecordsetro("rstQuery",Variable.Local.query)
+	F.Intrinsic.Control.If(V.ODBC.Con!rstQuery.EOF,=,False)
+		F.Intrinsic.Variable.LoadUDTFromRecordset("Con","rstQuery","v.uGlobal.uPyrl",False,0)
+	F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstQuery.Close
+
+Function.Intrinsic.Variable.UDTMultiSeekSet(V.uGlobal.uPyrl!EC,"01",V.uGlobal.uPyrl!EC,"R")
+Function.Intrinsic.Variable.UDTMultiSeekSet(V.uGlobal.uPyrl!TYPE,"RT",V.uGlobal.uPyrl!EC,"R")
+Function.Intrinsic.Variable.UDTMultiSeekSet(V.uGlobal.uPyrl!EC,"02",V.uGlobal.uPyrl!EC,"V")
+Function.Intrinsic.Variable.UDTMultiSeekSet(V.uGlobal.uPyrl!TYPE,"OT",V.uGlobal.uPyrl!EC,"O")
+Function.Intrinsic.Variable.UDTMultiSeekSet(V.uGlobal.uPyrl!TYPE,"HT",V.uGlobal.uPyrl!EC,"H")
+Function.Intrinsic.Variable.UDTMultiSeekSet(V.uGlobal.uPyrl!EC,"04",V.uGlobal.uPyrl!EC,"S")
+
+
+
+
+F.Intrinsic.Control.If(V.uGlobal.uPyrl!Employee.UBound,>,-1)
+	F.Intrinsic.Control.For(V.Local.iFor,V.uGlobal.uPyrl!Employee.LBound,V.uGlobal.uPyrl!EC.UBound,1)
+		F.Intrinsic.Control.If(V.Local.iFor,=,0)
+			F.Intrinsic.String.Concat(V.uGlobal.uPyrl(v.Local.iFor)!Employee,",1,",V.uGlobal.uPyrl(v.Local.iFor)!EC,",",V.uGlobal.uPyrl(v.Local.iFor)!Hours,",,",V.uGlobal.uPyrl(v.Local.iFor)!Dept,",",V.Ambient.NewLine,V.Local.sFile)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Concat(V.Local.sFile,V.uGlobal.uPyrl(v.Local.iFor)!Employee,",1,",V.uGlobal.uPyrl(v.Local.iFor)!EC,",",V.uGlobal.uPyrl(v.Local.iFor)!Hours,",,",V.uGlobal.uPyrl(v.Local.iFor)!Dept,",",V.Ambient.NewLine,V.Local.sFile)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.iFor)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.File.String2File(V.Local.FileName,V.Local.sFile)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("BuildFile_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3076_paycom_export_v001.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Unload)
+Function.Intrinsic.Control.EndIf
+	
+
+
+Program.Sub.BuildFile.End
+
+Program.Sub.Comments.Start
+${$0$}$paycom_export_all_v001$}$JCT$}$4/30/2014
+${$1$}$$}$$}$0$}$15290$}$PR0999-CREATE-FILE-HOOK$}$4/30/2014 6:51:57 AM$}$(Program: PR0999; Screen: PR0999)
+SF> Transactions> Transfer Labor To Payroll
+${$3$}$0$}$$}$-1$}$-1$}$$}$1/1/1900$}$for X-Tra Light Mfg, per quote 5629
+revision of existing script
+In sub buildFile,
+1. remove the earnings code references for codes
+03, 05, 06, 07, 08, 09, and 10. These codes will not be used, at this time.
+
+2. Change the earnings code reference for 02, to "V" and change the earnings code reference for 04, to "S"
+Program.Sub.Comments.End
+
